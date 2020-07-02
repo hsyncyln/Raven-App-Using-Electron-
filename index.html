@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP 
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">-->
+  
+    <meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://platform.linkedin.com ">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <title>Raven</title>
+    <link rel="stylesheet" href="./styles.css">
+
+  </head>
+  <body>
+
+    <div class="main">
+      <div class="left">
+        <div class="top-left">
+
+          <div class="logo"></div>
+          <div class="title"><span>Raven</span></div>
+          <div class="news-add" onClick="GetAdder()">
+            <div class="add"></div>
+            <div class="xadd">Add</div>
+          
+          </div>
+          
+        </div>
+
+        <form method="get" name="form" class="form">
+          <label class="news">News Name</label>
+          <input type="text" id="name"><br>
+          <label class="news">News Link</label>
+          <input type="text" id="link"><br>
+          <input type="button" onclick="Save()" value="Add" class="button">
+          <hr>
+        </form>          
+
+        <div class="actions">
+          <div class="action">
+            <div class="list"></div>
+            <div class="attr" onclick="ListAll()" >All Feeds</div>
+          </div>
+          <div class="action">
+            <div class="star"></div>
+            <div class="attr" onclick="GetFavourites()">Favourites</div>
+          </div>
+          <div class="action">
+            <div class="circle"></div>
+            <div class="attr">Unread Articles</div>
+          </div>
+          <div class="action">
+            <div class="black-circle"></div>
+            <div class="attr">Recently Read</div>
+          </div>
+          <div class="action">
+            <div class="no-wifi"></div>
+            <div class="attr">Saved Articles</div>
+          </div>
+          <div class="action">
+            <div class="export"></div>
+            <div class="attr">Export Subscriptions</div>
+          </div>
+          <div class="action">
+            <div class="import"></div>
+            <div class="attr">Import Subscriptions</div>
+          </div>
+          <div class="action">
+            <div class="mark"></div>
+            <div class="attr">Mark All As Read</div>
+          </div>
+          <div class="action">
+            <div class="settings"></div>
+            <div class="attr">Settings</div>
+          </div>
+        </div>
+
+        <div class="subs">SUBSCRİPTİONS</div>
+
+      </div>
+
+      <div class="middle">
+        <div class="top-middle" >
+
+          <form method="get" class="find">
+            
+            <div class="search" onclick="Search()"></div>
+            <input type="search" class="finder" placeholder="Search">
+
+          </form>
+      
+        </div>
+
+        <div class="container" >
+            
+        </div>
+
+      </div>
+
+      <div class="right">
+        <div class="top-right">
+          <div class="no-wifi2"></div>
+          <div class="export2"></div>
+          <div class="star2" onclick="MakeFavourite()"></div>
+          <div class="point"></div>
+      <!--    <div class="open" onclick="Open()"></div>  -->
+          <div id="border"></div>
+        </div>
+        <div class="bottom-right">
+          
+        </div>
+      </div>
+
+    </div>
+    
+    <script src="./node_modules/rss-parser/dist/rss-parser.min.js"></script>
+    <script>
+
+//https://www.ntv.com.tr/gundem.rss
+//http://rss.cnn.com/rss/edition.rss
+
+        let all=[];
+        let favourite=[];
+        let selectedNew;
+        let selectedNews=[];
+
+        function ListAll(){
+
+          MiddleClear();
+          BottomRightClear();
+          TopRightClear();
+          let container=document.querySelector(".container");
+
+          for(i=0;i<all.length;i++){
+            for(j=0;j<all[i].length;j++){
+              container.appendChild(all[i][j]);
+            }
+          }
+        }
+        function MakeFavourite(){
+          
+          let containersChildren=document.querySelector('.container').children;
+          let star=document.querySelector(".star2");
+
+          if(favourite.includes(selectedNew)){
+            for(i=0;i<favourite.length;i++){
+              if(favourite[i]===selectedNew){
+                favourite.splice(i,1);
+              }
+            }
+          }
+          else{
+            for(i=0;i<containersChildren.length;i++){
+              if(containersChildren[i]===selectedNew){
+                favourite.push(selectedNew);
+              }       
+            } 
+          }
+          TopRightFix(); 
+        }
+
+        function GetFavourites(){
+          
+          MiddleClear();
+          BottomRightClear();
+          TopRightClear();
+          let container=document.querySelector(".container");
+
+          for(i=0;i<favourite.length;i++){
+            container.appendChild(favourite[i]);
+          }
+
+        }
+
+        function Search(){
+
+          let news=document.querySelector(".container");
+          let list=news.querySelectorAll("div");
+          let value=document.querySelector(".finder").value; 
+          
+          for(i=0;i<list.length;i++){
+            if(list[i].textContent.includes(value)===false){
+              list[i].style["display"]="none";
+            }
+            else{
+              list[i].style["display"]="block";
+            }         
+          }
+        }
+        
+        function GetAdder(){
+          let adder=document.querySelector(".form");
+          let action=document.querySelector(".actions");
+          if(adder.style["display"]==="block"){
+            adder.style["display"]="none";
+            action.style["display"]="block";
+          }
+          else{
+            adder.style["display"]="block";
+            action.style["display"]="none";
+          }
+          
+        }
+        
+        function Save(){
+
+          if(control()){
+
+            let name=document.getElementById("name").value;
+            let link=document.getElementById("link").value;
+
+            let news=document.createElement('div');
+            news.textContent=name.toUpperCase();
+            news.onclick=function(){Get(link,name.toUpperCase())};
+
+            news.style.cssText+="font-family:Arial;font-weight:bold;font-size:14px;display:block;margin-left:0.4rem;width:80%;height:3.5%;display:inline-block;padding-top:0.25rem;";        
+            let adder=document.querySelector('.left');
+            adder.appendChild(news);
+
+            let close=document.createElement("div");
+            close.style.cssText+="width:10%;height:3.5%;float:right;margin-right:0.2rem;" 
+              +"background-image:url(./images/close.png);background-position:center;background-repeat:no-repeat;";
+            close.onclick=function(){Close(news,close)};
+            adder.appendChild(close);
+          }          
+        }
+
+        function Close(news,close){
+          
+          
+          news.style.cssText="display:none;";
+          close.style.cssText="display:none;";
+          let container=document.querySelector(".container");
+
+          for(j=0;j<all.length;j++){
+            for(i=0;i<container.length;i++){
+              if(container[i]===all[j][i]){
+                all[j].splice(i,1);
+              }
+            }
+          }
+          container.style.cssText="display:none";
+          let right=document.querySelector(".bottom-right");
+          right.style.cssText="display:none";
+
+          let newsName = document.querySelector('.top-right');
+          let ctrl=newsName.lastElementChild;
+          if(ctrl.id==="border"){
+
+          }
+          else{
+            newsName.removeChild(ctrl);
+          }
+        }
+
+        function control(){
+          let name=document.getElementById("name").value;
+          let link=document.getElementById("link").value;
+          if(name===""){
+            alert("Lütfen haber adını doldurun!");
+            return false;
+          }
+          else if(link===""){
+            alert("Lütfen haber linkini giriniz doldurun!");
+            return false;
+          }
+          else{
+            return true;
+          }  
+        }
+
+        function Get(link,name){
+          const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
+          
+          let parser = new RSSParser({
+            headers: {'User-Agent': 'something different'},
+            timeout: 5000,
+          });
+
+          MiddleClear();
+          BottomRightClear();
+          TopRightClear();
+         
+          parser.parseURL(link, function(err, feed) {
+            if (err) {
+              alert("Girdiğiniz linke erişilememektedir!");
+              let newsName = document.querySelector('.left');
+              //önceki elementi siler
+              let child=newsName.lastElementChild;
+              newsName.removeChild(child);
+              let child2=newsName.lastElementChild;
+              newsName.removeChild(child2);
+              return;
+            }
+            news=[];
+            let container = document.querySelector('.container');
+            feed.items.forEach(function(item) {
+
+              let feedContainer = document.createElement('div');
+              feedContainer.style.cssText+="color:black; font-family:Arial;padding:0.7rem;padding-top:0.2rem;margin-top:0.2rem";
+              
+              let date=document.createElement('div');
+              date.style.cssText="color:black; font-family:Arial;text-align:left;width:70%;height:100%;"
+                  +"font-size:12px;color:gray;padding:auto;padding-bottom:0.2rem;padding-left:0.7rem;margin-top:0.2rem";
+              if(item.pubDate===undefined){
+
+              }
+              else{
+                let index=item.pubDate.indexOf(':');
+                date.textContent=item.pubDate.substring(0,index-3);
+              }
+
+              let newsName=document.createElement('div');
+              newsName.style.cssText="padding-right:0.7rem;width:25%;height:100%;font-size:12px;color:gray;float:right;text-align:right;";
+              newsName.textContent=name;
+        
+              feedContainer.textContent=item.title;
+
+              let sum=document.createElement('div');
+              sum.appendChild(newsName);
+              sum.appendChild(date);
+              
+              sum.appendChild(feedContainer);
+              let border=document.createElement("hr");
+              sum.appendChild(border);
+  
+              sum.onclick=function (){ 
+                BottomRightClear(); 
+                BottomRightWrite(item);
+                TopRightClear();
+                TopRightWrite(feed);
+  
+                selectedNew=sum;
+                TopRightFix();
+
+              }
+              news.push(sum);
+              container.appendChild(sum); 
+            });
+            all.push(news);
+
+          });   
+        }
+  
+        function MiddleClear(){
+
+          let container = document.querySelector('.container');
+          container.style["display"]="block";
+          //önceki elementleri siler
+          let child=container.lastElementChild;
+          while(child){
+
+           // child.style.cssText="display:none";
+            container.removeChild(child);
+            child=container.lastElementChild;
+          }
+          
+        }
+        function TopRightClear(){
+
+          let newsName = document.querySelector('.top-right');
+          let ctrl=newsName.lastElementChild;
+          if(ctrl.id==="border"){
+
+          }
+          else{
+            //ctrl.style["display"]="none";
+            newsName.removeChild(ctrl);
+          }
+        }
+
+        function BottomRightClear(){
+          let bottomRight = document.querySelector('.bottom-right');
+          bottomRight.style.cssTex+="display:block";
+          //önceki elementleri siler
+          let child=bottomRight.lastElementChild;
+          while(child){
+            //child.style.cssText+="display:none";
+            bottomRight.removeChild(child);
+            child=bottomRight.lastElementChild;
+          }
+        }  
+        function BottomRightWrite(item){
+          
+          let yaz=document.createElement('div');
+          yaz.style.cssText+="font-family:Arial ;padding:1rem"
+          yaz.textContent=item.contentSnippet;    
+
+          let bottomRight = document.querySelector('.bottom-right');
+          bottomRight.appendChild(yaz);
+
+        }
+
+        function TopRightWrite(feed){
+          let img=document.createElement("div");
+          img.style.cssText="background-image:url("+feed.image.url+");width:30%;height:90%;"+
+            "background-repeat:no-repeat;float:left;display:inline;";
+
+          let dene=document.querySelector(".top-right");
+          dene.appendChild(img);
+        }
+
+        function TopRightFix(){
+          let star=document.querySelector(".star2");
+
+          if(favourite.includes(selectedNew)){
+            star.style["background-image"]="url(./images/star2.png)";
+          }
+          else{
+            star.style["background-image"]="url(./images/star.png)";
+          }
+        }
+
+      </script>
+
+      
+    <!-- You can also require other files to run in this process -->
+   <script src="./renderer.js"></script>
+  </body>
+</html>
+
