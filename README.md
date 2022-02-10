@@ -1,3 +1,19 @@
+# Raven Desktop App
+
+Similar to Raven, RSS Feed Reader desktop application
+
+<h4>Technologies</h4>
+ 
+ - Electron 
+ - JS
+ - HTML5
+ - CSS3
+ 
+ <h4>Releated App Images</h4>
+ https://github.com/hsyncyln/Raven-App-Using-Electron-/tree/master/Screenshot
+
+-----
+
 # electron-quick-start
 
 **Clone and run for a quick way to see Electron in action.**
